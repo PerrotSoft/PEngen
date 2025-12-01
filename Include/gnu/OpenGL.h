@@ -70,7 +70,11 @@ namespace gnu {
     };
 
     // --- ОСНОВНЫЕ ФУНКЦИИ ДВИЖКА ---
-    GLFWwindow* Init_OpenGL_Window(int width, int height, const std::string& title);
+    GLFWwindow* Init_OpenGL_Window(int width, int height, const std::string& title); 
+    void Show_Loading_Screen(GLFWwindow* window,
+        const gnu::ShaderProgram& uiShader,
+        const glm::mat4& orthoMatrix);
+    ShaderProgram* Audo_Compile_and_Link_Shader();
     ShaderProgram Compile_and_Link_Shader(const std::string& vertexPath,
         const std::string& fragmentPath);
     GLuint Load_Texture_From_File(const std::string& filePath);

@@ -1,8 +1,8 @@
 ﻿#include "../../Include/Audio/Audio.h"
+#include "../../Include/cfg/log.h"
 #include <windows.h> 
 #include <iostream>
 #include <filesystem>
-#include <cwchar>
 #pragma comment(lib, "Winmm.lib")
 
 using Audio::AudioManager;
@@ -35,6 +35,7 @@ namespace Audio {
         // 1. Открываем файл
         command = "open \"" + filePath + "\" type mpegvideo alias " + alias;
         if (mciSendStringA(command.c_str(), NULL, 0, NULL) != 0) {
+            logger(("Audio Error: File not found: " + filePath).c_str());
             return;
         }
 
@@ -58,6 +59,7 @@ namespace Audio {
         command = "open \"" + filePath + "\" type mpegvideo alias " + alias;
         if (mciSendStringA(command.c_str(), NULL, 0, NULL) != 0) {
             std::cout << "Audio Error [Thread]: Could not open file: " << filePath << std::endl;
+            logger(("Audio Error: File not found: " + filePath).c_str());
             AudioManager::loopFlags[id] = false;
             return;
         }
@@ -95,6 +97,7 @@ namespace Audio {
     void AudioManager::PlaySound(const std::string& filePath, int id) {
         if (!FileExists(filePath)) {
             std::cout << "Audio Error: File not found: " << filePath << std::endl;
+            logger(("Audio Error: File not found: " + filePath).c_str());
             return;
         }
 
@@ -117,6 +120,7 @@ namespace Audio {
     void AudioManager::PlayLoopedSound(const std::string& filePath, int id) {
         if (!FileExists(filePath)) {
             std::cout << "Audio Error: File not found: " << filePath << std::endl;
+            logger(("Audio Error: File not found: " + filePath).c_str());
             return;
         }
 
@@ -139,6 +143,7 @@ namespace Audio {
             mciSendStringA(("stop " + alias).c_str(), NULL, 0, NULL);
         }
         else {
+            logger((std::string("Audio Warning: Cannot Stop. Sound ID ") + std::to_string(id) + " not found.").c_str());
             return;
         }
 
@@ -185,6 +190,7 @@ namespace Audio {
         }
         else {
             std::cout << "Audio Warning: Cannot set volume. Sound ID " << id << " not found." << std::endl;
+            logger((std::string("Audio Warning: Cannot set volume. Sound ID ") + std::to_string(id) + " not found.").c_str());
         }
     }
 
@@ -208,10 +214,15 @@ namespace Audio {
         activeSounds.clear();
         loopFlags.clear();
     }
-
     void AudioManager::PlaySoundW(const std::wstring& filePath, int id) {
         if (!FileExistsW(filePath)) {
             std::wcout << L"Audio Error: File not found: " << filePath << std::endl;
+
+            // Формирование сообщения для logger (const char*)
+            std::string log_message = "Audio Error: File not found: name";
+
+            // Отправка в logger
+            logger(log_message.c_str());
             return;
         }
 

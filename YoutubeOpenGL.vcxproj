@@ -240,6 +240,7 @@ Gdi32.lib;Shell32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencie
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="IncludeCpp\PEngen\Forder_Sys.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="IncludeCpp\Audio\Audio.cpp" />
     <ClCompile Include="IncludeCpp\cfg\cfg.cpp" />
@@ -250,6 +251,8 @@ Gdi32.lib;Shell32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencie
     <ClCompile Include="Library\Include\glm\glm.cppm" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\Downloads\zipper.h" />
+    <ClInclude Include="Include\PEngen\Forder_Sys.h" />
     <ClInclude Include="Include\Audio\Audio.h" />
     <ClInclude Include="Include\cfg\cfg.h" />
     <ClInclude Include="Include\cfg\log.h" />
@@ -552,6 +555,7 @@ Gdi32.lib;Shell32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencie
     <ClInclude Include="Library\Include\stb_easy_font.h" />
     <ClInclude Include="Library\Include\stb_image.h" />
     <ClInclude Include="Library\Include\tiny_obj_loader.h" />
+    <ClInclude Include="Library\Include\zipper.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Library\Include\glm\detail\func_common.inl" />
@@ -694,6 +698,7 @@ Gdi32.lib;Shell32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencie
     <None Include="Library\Include\glm\gtx\vector_angle.inl" />
     <None Include="Library\Include\glm\gtx\vector_query.inl" />
     <None Include="Library\Include\glm\gtx\wrap.inl" />
+    <None Include="Readme.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

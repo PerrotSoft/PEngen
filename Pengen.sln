@@ -5,8 +5,6 @@ VisualStudioVersion = 18.3.11222.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PEngen", "YoutubeOpenGL.vcxproj", "{D94349FD-5460-401F-9D7A-1CEDAAC766A5}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConsoleApplication1", "..\ConsoleApplication1\ConsoleApplication1.vcxproj", "{BCF022D7-705C-4814-9AEB-D092D067247D}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug Linox|x64 = Debug Linox|x64
@@ -29,18 +27,6 @@ Global
 		{D94349FD-5460-401F-9D7A-1CEDAAC766A5}.Release|x64.Build.0 = Release|x64
 		{D94349FD-5460-401F-9D7A-1CEDAAC766A5}.Release|x86.ActiveCfg = Release|Win32
 		{D94349FD-5460-401F-9D7A-1CEDAAC766A5}.Release|x86.Build.0 = Release|Win32
-		{BCF022D7-705C-4814-9AEB-D092D067247D}.Debug Linox|x64.ActiveCfg = Debug|x64
-		{BCF022D7-705C-4814-9AEB-D092D067247D}.Debug Linox|x64.Build.0 = Debug|x64
-		{BCF022D7-705C-4814-9AEB-D092D067247D}.Debug Linox|x86.ActiveCfg = Debug|Win32
-		{BCF022D7-705C-4814-9AEB-D092D067247D}.Debug Linox|x86.Build.0 = Debug|Win32
-		{BCF022D7-705C-4814-9AEB-D092D067247D}.Debug|x64.ActiveCfg = Debug|x64
-		{BCF022D7-705C-4814-9AEB-D092D067247D}.Debug|x64.Build.0 = Debug|x64
-		{BCF022D7-705C-4814-9AEB-D092D067247D}.Debug|x86.ActiveCfg = Debug|Win32
-		{BCF022D7-705C-4814-9AEB-D092D067247D}.Debug|x86.Build.0 = Debug|Win32
-		{BCF022D7-705C-4814-9AEB-D092D067247D}.Release|x64.ActiveCfg = Release|x64
-		{BCF022D7-705C-4814-9AEB-D092D067247D}.Release|x64.Build.0 = Release|x64
-		{BCF022D7-705C-4814-9AEB-D092D067247D}.Release|x86.ActiveCfg = Release|Win32
-		{BCF022D7-705C-4814-9AEB-D092D067247D}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -17,6 +17,7 @@
 #include <iostream>
 #include <map> 
 #include <cmath> 
+#include "../../Include/cfg/log.h"
 #include <cstring>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -25,8 +26,10 @@
 #include <stb_easy_font.h> 
 #ifdef _WIN32
 #define SHADERS_BASE_PATH "PEngen\\shaders\\"
+#define BASE_PATH_ICON_PE "PEngen\\data\\icon.png"
 #else
 #define SHADERS_BASE_PATH "PEngen/shaders/"
+#define BASE_PATH_ICON_PE "PEngen/data/icon.png"
 #endif
 // -------------------------------------------------------------------
 // --- ИМИТАЦИЯ ЗАГРУЗКИ (СТУБЫ) ---
@@ -163,6 +166,7 @@ gnu::ShaderProgram gnu::Compile_and_Link_Shader(const std::string& vertexPath,
             glGetProgramInfoLog(program.programID, infoLogLength, NULL, &errorMessage[0]);
             glDeleteProgram(program.programID);
             program.programID = 0;
+            logger((std::string("Shader Linking Failed: ") + std::string(errorMessage.begin(), errorMessage.end())).c_str());
             throw std::runtime_error("Shader Linking Failed: " + std::string(errorMessage.begin(), errorMessage.end()));
         }
 
@@ -173,6 +177,7 @@ gnu::ShaderProgram gnu::Compile_and_Link_Shader(const std::string& vertexPath,
     }
     catch (const std::runtime_error& e) {
         std::cerr << "Shader Error: " << e.what() << std::endl;
+        logger((std::string("Shader Error: ") + e.what()).c_str());
         program.programID = 0;
     }
     return program;
@@ -191,12 +196,78 @@ static void glfw_error_callback(int error, const char* description) {
 static void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
+gnu::ShaderProgram* gnu::Audo_Compile_and_Link_Shader() {
+    gnu::ShaderProgram modelShader = gnu::Compile_and_Link_Shader("simple.vert", "simple.frag");
 
+    gnu::ShaderProgram uiShader = gnu::Compile_and_Link_Shader("simple.vert", "simple.frag");
+
+    gnu::ShaderProgram textShader = gnu::Compile_and_Link_Shader("text.vert", "text.frag");
+	return new gnu::ShaderProgram[3]{ modelShader, uiShader, textShader };
+}
+
+void gnu::Show_Loading_Screen(GLFWwindow* window,
+    const gnu::ShaderProgram& uiShader,
+    const glm::mat4& orthoMatrix)
+{
+    if (!window || uiShader.programID == 0) {
+        logger("ERROR: Failed to initialize loading screen (Window or Shader is NULL).");
+        return;
+    }
+
+    // 1. ЗАГРУЗКА ТЕКСТУРЫ
+    // Предполагаем, что путь ведет к вашему файлу в папке textures/
+    GLuint splashTextureID = Load_Texture_From_File(BASE_PATH_ICON_PE);
+
+    if (splashTextureID == 0) {
+        logger((std::string("WARNING: Failed to load splash screen texture: ") + BASE_PATH_ICON_PE).c_str());
+        // Продолжаем без заставки
+        return;
+    }
+
+    // 2. ПОДГОТОВКА ОБЪЕКТА UI
+    // Создаем полноэкранный квад (размер 800x600 - замените на реальные размеры окна)
+    int windowWidth, windowHeight;
+    glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
+
+    // * UIQuad должен быть объявлен в gnu::UI::, и иметь публичный конструктор *
+    // Мы создадим временную структуру, чтобы не зависеть от скрытой реализации
+    gnu::UI::Image splashImage;
+
+    // Создаем базовый квад (предполагаем, что вам нужен квад для UI)
+    // ВАЖНО: Ваша система UI использует gnu::UI::Mesh Create_Quad_Mesh();
+    // Мы должны вызвать ее, чтобы получить VAO/VBO.
+    static gnu::Mesh staticQuadMesh = gnu::UI::Create_Quad_Mesh();
+
+    splashImage.mesh = staticQuadMesh;
+    splashImage.textureID = splashTextureID;
+    splashImage.position = glm::vec2(0.0f, 0.0f); // Начинаем с левого верхнего угла
+    splashImage.size = glm::vec2((float)windowWidth, (float)windowHeight); // Размер окна
+    splashImage.layer = 1.0f; // Отображение поверх всего
+
+    // 3. ЦИКЛ ОТОБРАЖЕНИЯ (Один кадр)
+
+    // Очистка экрана
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Черный фон
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Отрисовка заставки
+    gnu::UI::Draw_Image(splashImage, uiShader, orthoMatrix);
+
+    // Обмен буферов, чтобы показать заставку
+    glfwSwapBuffers(window);
+    glfwPollEvents(); // Обработка событий, чтобы окно не зависло
+
+    // 4. ОЧИСТКА РЕСУРСОВ ТЕКСТУРЫ (если она нужна только для заставки)
+    // Если вы планируете использовать текстуру splashImage.textureID в дальнейшем, 
+    // не удаляйте ее! Если нет, то:
+    // glDeleteTextures(1, &splashTextureID);
+}
 GLFWwindow* gnu::Init_OpenGL_Window(int width, int height, const std::string& title) {
     glfwSetErrorCallback(glfw_error_callback);
 
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
+        logger("Failed to initialize GLFW");
         return nullptr;
     }
 
@@ -208,6 +279,7 @@ GLFWwindow* gnu::Init_OpenGL_Window(int width, int height, const std::string& ti
     GLFWwindow* window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
     if (!window) {
         std::cerr << "Failed to open GLFW window." << std::endl;
+        logger("Failed to open GLFW window.");
         glfwTerminate();
         return nullptr;
     }
@@ -216,6 +288,7 @@ GLFWwindow* gnu::Init_OpenGL_Window(int width, int height, const std::string& ti
     // Инициализация GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cerr << "Failed to initialize GLAD" << std::endl;
+        logger("Failed to initialize GLAD");
         glfwDestroyWindow(window);
         glfwTerminate();
         return nullptr;
@@ -258,6 +331,7 @@ GLuint gnu::Load_Texture_From_File(const std::string& filePath) {
     }
     else {
         std::cerr << "ERROR: STB_IMAGE failed to load texture: " << filePath << std::endl;
+		logger(("ERROR: STB_IMAGE failed to load texture: " + filePath).c_str());
     }
 
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -316,12 +390,15 @@ gnu::Model gnu::Load_Model_From_File_OBJ(const std::string& filePath, const std:
 
     if (!warn.empty()) {
         std::cout << "tinyobjloader WARNING: " << warn << std::endl;
+		logger(("tinyobjloader WARNING: " + warn).c_str());
     }
     if (!err.empty()) {
         throw std::runtime_error("tinyobjloader ERROR: " + err);
+		logger(("tinyobjloader ERROR: " + err).c_str());
     }
     if (!ret) {
         throw std::runtime_error("Failed to load/parse OBJ file: " + filePath);
+		logger(("Failed to load/parse OBJ file: " + filePath).c_str());
     }
 
     std::map<tinyobj::index_t, uint32_t, tinyobj_index_cmp> unique_indices;
