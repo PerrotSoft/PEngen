@@ -5,6 +5,6 @@ using namespace std;
 class cfg
 {
 	public:
-		string load(const string& filePath);
-		void save(const string& filePath, const string& data);
+		string PEload(const string& filePath);
+		void PEsave(const string& filePath, const string& data);
 };

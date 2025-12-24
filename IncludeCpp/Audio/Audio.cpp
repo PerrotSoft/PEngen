@@ -9,46 +9,33 @@ using Audio::AudioManager;
 
 namespace Audio {
 
-    // Статические переменные
     std::map<int, std::string> AudioManager::activeSounds;
     std::map<int, std::thread> AudioManager::soundThreads;
     std::map<int, std::atomic<bool>> AudioManager::loopFlags;
 
-    // Проверка существования файла
     bool Audio::AudioManager::FileExists(const std::string& path) {
         return std::filesystem::exists(path);
     }
     bool Audio::AudioManager::FileExistsW(const std::wstring& path) {
         return std::filesystem::exists(path);
     }
-
-    // Генерация alias для MCI
     std::string AudioManager::getAlias(int id) {
         return "sound" + std::to_string(id);
     }
-
-    // --- ПОТОК ДЛЯ ОДИНОЧНОГО ВОСПРОИЗВЕДЕНИЯ ---
     void AudioManager::singleSoundThreadFunc(int id, const std::string& filePath) {
         std::string alias = getAlias(id);
         std::string command;
 
-        // 1. Открываем файл
         command = "open \"" + filePath + "\" type mpegvideo alias " + alias;
         if (mciSendStringA(command.c_str(), NULL, 0, NULL) != 0) {
             PElogger(("Audio Error: File not found: " + filePath).c_str());
             return;
         }
 
-        // 2. Воспроизводим и ждем завершения
         command = "play " + alias + " wait";
         mciSendStringA(command.c_str(), NULL, 0, NULL);
-
-        // 3. Закрываем ресурс
         mciSendStringA(("close " + alias).c_str(), NULL, 0, NULL);
     }
-
-
-    // --- ПОТОК ДЛЯ ЗАЦИКЛЕННОГО ВОСПРОИЗВЕДЕНИЯ (с циклом опроса) ---
     void AudioManager::loopThreadFunc(int id, const std::string& filePath) {
         auto it = activeSounds.find(id);
         if (it == activeSounds.end()) return;
@@ -75,25 +62,17 @@ namespace Audio {
             mciSendStringA(("play " + alias + " from 0").c_str(), NULL, 0, NULL);
 
             int slept_time = 0;
-
-            // Цикл опроса: спим короткими интервалами и проверяем флаг
             while (AudioManager::loopFlags[id] && slept_time < lengthMs) {
                 Sleep(POLLING_INTERVAL_MS);
                 slept_time += POLLING_INTERVAL_MS;
             }
-
-            // Если вышли из цикла из-за флага остановки, прерываем воспроизведение
             if (!AudioManager::loopFlags[id]) {
                 mciSendStringA(("stop " + alias).c_str(), NULL, 0, NULL);
                 break;
             }
         }
-
         mciSendStringA(("close " + alias).c_str(), NULL, 0, NULL);
     }
-
-
-    // --- PlaySound (ОДИНОЧНЫЙ ЗВУК) ---
     void AudioManager::PEAPlaySound(const std::string& filePath, int id) {
         if (!FileExists(filePath)) {
             std::cout << "Audio Error: File not found: " << filePath << std::endl;
@@ -109,14 +88,9 @@ namespace Audio {
 
         activeSounds[id] = alias;
         loopFlags[id] = false;
-
-        // Запускаем поток для одиночного воспроизведения и используем detach
         std::thread t([id, filePath]() { singleSoundThreadFunc(id, filePath); });
         t.detach();
     }
-
-
-    // --- PlayLoopedSound (ЗАЦИКЛЕННЫЙ ЗВУК) ---
     void AudioManager::PEAPlayLoopedSound(const std::string& filePath, int id) {
         if (!FileExists(filePath)) {
             std::cout << "Audio Error: File not found: " << filePath << std::endl;
@@ -129,14 +103,9 @@ namespace Audio {
 
         activeSounds[id] = alias;
         loopFlags[id] = true;
-
-        // Запускаем поток (joinable)
         soundThreads[id] = std::thread([id, filePath]() { loopThreadFunc(id, filePath); });
     }
-
-    // --- StopSound (ОСТАНОВКА) ---
     void AudioManager::PEAStopSound(int id) {
-        // 1. МГНОВЕННАЯ ТИШИНА: Отправляем команду остановки MCI
         auto soundIt = activeSounds.find(id);
         if (soundIt != activeSounds.end()) {
             std::string alias = soundIt->second;
@@ -146,37 +115,23 @@ namespace Audio {
             PElogger((std::string("Audio Warning: Cannot Stop. Sound ID ") + std::to_string(id) + " not found.").c_str());
             return;
         }
-
-        // 2. Сигнализируем потоку о завершении
         auto loopIt = loopFlags.find(id);
-        if (loopIt != loopFlags.end()) {
-            loopIt->second = false;
-        }
-
-        // 3. Ждем завершения потока ТОЛЬКО, если он joinable (зацикленный звук)
+        if (loopIt != loopFlags.end()) loopIt->second = false;
         auto threadIt = soundThreads.find(id);
         if (threadIt != soundThreads.end()) {
             if (threadIt->second.joinable()) {
-                threadIt->second.join(); // Ждем, пока loopThreadFunc закроет MCI
+                threadIt->second.join();
             }
             else {
-                // Если поток не joinable (detached PlaySound), нужно закрыть MCI,
                 mciSendStringA(("close " + soundIt->second).c_str(), NULL, 0, NULL);
             }
             soundThreads.erase(threadIt);
         }
-        else {
-            // Если нет записи в soundThreads, это detached PlaySound. Закрываем ресурс.
-            mciSendStringA(("close " + soundIt->second).c_str(), NULL, 0, NULL);
-        }
+        else mciSendStringA(("close " + soundIt->second).c_str(), NULL, 0, NULL);
 
-        // 4. Очищаем записи
         activeSounds.erase(soundIt);
         loopFlags.erase(id);
     }
-
-    // --- SetVolume, StopAll, PlaySoundW ---
-
     void AudioManager::PEASetVolume(float volume, int id) {
         if (volume < 0.0f) volume = 0.0f;
         if (volume > 1.0f) volume = 1.0f;
@@ -217,11 +172,8 @@ namespace Audio {
     void AudioManager::PEAPlaySoundW(const std::wstring& filePath, int id) {
         if (!FileExistsW(filePath)) {
             std::wcout << L"Audio Error: File not found: " << filePath << std::endl;
-
-            // Формирование сообщения для PElogger (const char*)
             std::string log_message = "Audio Error: File not found: name";
 
-            // Отправка в PElogger
             PElogger(log_message.c_str());
             return;
         }
@@ -237,4 +189,4 @@ namespace Audio {
         PEAPlaySound(utf8Path, id);
     }
 
-} // namespace Audio
+}

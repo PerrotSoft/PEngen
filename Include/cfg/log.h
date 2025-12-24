@@ -1,3 +1,3 @@
 #pragma once
-void logger(const char* message);	
-void logger_up(const char* message);
+void PElogger(const char* message);
+void PElogger_up(const char* message);

@@ -4,29 +4,18 @@
 #include <thread>
 #include <conio.h>
 #include <atomic>
-#include <windows.h> // Для CP_UTF8, WideCharToMultiByte и MCI
+#include <windows.h>
 
 namespace Audio {
 
     class AudioManager {
     public:
-        // Воспроизвести одиночный звук
-        static void PlaySound(const std::string& filePath, int id);
-
-        // Воспроизвести звук в цикле
-        static void PlayLoopedSound(const std::string& filePath, int id);
-
-        // Остановить звук по ID
-        static void StopSound(int id);
-
-        // Остановить все звуки
-        static void StopAll();
-
-        // Установить громкость 0.0f..1.0f
-        static void SetVolume(float volume, int id);
-
-        // Добавить перегрузку PlaySoundW для поддержки широких строк
-        static void PlaySoundW(const std::wstring& filePath, int id);
+        static void PEAPlaySound(const std::string& filePath, int id);
+        static void PEAPlayLoopedSound(const std::string& filePath, int id);
+        static void PEAStopSound(int id);
+        static void PEAStopAll();
+        static void PEASetVolume(float volume, int id);
+        static void PEAPlaySoundW(const std::wstring& filePath, int id);
 
     private:
         static std::map<int, std::string> activeSounds;
@@ -36,12 +25,8 @@ namespace Audio {
         static bool FileExists(const std::string& path);
         static bool FileExistsW(const std::wstring& path);
         static std::string getAlias(int id);
-
-        // Для зацикленных звуков (с циклом опроса)
         static void loopThreadFunc(int id, const std::string& filePath);
-
-        // Для одиночных звуков (с detach)
         static void singleSoundThreadFunc(int id, const std::string& filePath);
     };
 
-} // namespace Audio
+}

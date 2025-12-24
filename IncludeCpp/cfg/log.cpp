@@ -12,8 +12,8 @@ void PElogger(const char* message)
 		auto now = system_clock::now();
 		std::time_t now_time = system_clock::to_time_t(now);
 		char buffer[26];
-		ctime_s(buffer, sizeof(buffer), &now_time); // безопасный аналог ctime()
-		buffer[strcspn(buffer, "\n")] = '\0'; // удалить \n из времени
+		ctime_s(buffer, sizeof(buffer), &now_time);
+		buffer[strcspn(buffer, "\n")] = '\0';
 		logFile << buffer << " : " << message << std::endl;
 		logFile.close();
 	}
@@ -26,8 +26,8 @@ void PElogger_up(const char* message)
 		auto now = system_clock::now();
 		std::time_t now_time = system_clock::to_time_t(now);
 		char buffer[26];
-		ctime_s(buffer, sizeof(buffer), &now_time); // безопасный аналог ctime()
-		buffer[strcspn(buffer, "\n")] = '\0'; // удалить \n из времени
+		ctime_s(buffer, sizeof(buffer), &now_time);
+		buffer[strcspn(buffer, "\n")] = '\0';
 		logFile << buffer << " : " << message << std::endl;
 		logFile.close();
 	}
